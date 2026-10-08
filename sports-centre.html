@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sports Centre Head · CUI Futsal Court Booking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/portal.css">
+<link rel="stylesheet" href="assets/css/calendar.css">
+<link rel="stylesheet" href="assets/css/demo.css">
+</head>
+<body>
+<header class="site-header"><div class="container">
+  <a class="brand" href="index.html"><img class="brand-logo" src="assets/img/logo.png" alt="COMSATS University Islamabad"><span class="brand-name">CUI Futsal Court<small>COMSATS University Islamabad · Booking System</small></span></a>
+  <div class="user-chip" id="userChip"></div>
+</div></header>
+<main class="container page" id="app">
+  <h1 class="page-title">Sports Centre Head</h1>
+  <p class="page-sub">Final approval, attendance and administration.</p>
+  <div class="kpis" id="kpis"></div>
+  <div class="tabbar" role="tablist">
+    <button role="tab" data-tab="queue">Final approvals<span class="count" id="cnt-queue" hidden></span></button>
+    <button role="tab" data-tab="cal">Calendar</button>
+    <button role="tab" data-tab="all">All bookings</button>
+    <button role="tab" data-tab="bans">Bans</button>
+    <button role="tab" data-tab="closures">Court closures</button>
+    <button role="tab" data-tab="depts">Departments &amp; heads</button>
+    <button role="tab" data-tab="audit">Audit log</button>
+  </div>
+  <section class="tab-panel" id="tab-cal"><div class="card">
+    <div class="cal-nav">
+      <button class="btn btn-secondary btn-sm" id="prevWeek">&larr; Previous week</button>
+      <h3 id="weekLabel"></h3>
+      <button class="btn btn-secondary btn-sm" id="nextWeek">Next week &rarr;</button>
+    </div>
+    <div style="text-align:center;margin:-6px 0 12px"><button class="btn btn-secondary btn-sm" id="thisWeek">This week</button></div>
+    <div class="legend">
+      <span><i style="background:var(--accent-soft)"></i>Free</span><span><i style="background:var(--warn-soft)"></i>Held (pending)</span>
+      <span><i style="background:#e6eefb"></i>Confirmed</span><span><i style="background:#f6d5d0"></i>Court closed</span><span><i style="background:#f1f3f7"></i>Past</span>
+      <span>Tap any slot for details</span>
+    </div>
+    <div id="calendar"></div>
+  </div></section>
+  <section class="tab-panel" id="tab-queue"><div class="card"><div id="queue"></div></div></section>
+  <section class="tab-panel" id="tab-all"><div class="card">
+    <div class="filters">
+      <label>From<input type="date" id="fFrom"></label>
+      <label>To<input type="date" id="fTo"></label>
+      <label>Department<select id="fDept"><option value="">All departments</option></select></label>
+      <label>Status<select id="fStatus"><option value="">All statuses</option>
+        <option value="PENDING_DEPARTMENT">Pending – department</option>
+        <option value="PENDING_SPORTS_CENTRE">Pending – sports centre</option>
+        <option value="CONFIRMED">Confirmed</option>
+        <option value="CANCELLED">Cancelled</option>
+        <option value="REJECTED">Rejected</option>
+        <option value="EXPIRED">Expired</option>
+        <option value="NO_SHOW">No-show</option></select></label>
+      <label>Search<input type="search" id="fQ" placeholder="Name, roll no, ref"></label>
+      <button class="btn btn-secondary" id="fClear">Clear filters</button>
+    </div>
+    <div id="all"></div>
+  </div></section>
+  <section class="tab-panel" id="tab-bans"><div class="card"><div id="bans"></div></div></section>
+  <section class="tab-panel" id="tab-closures"><div class="card">
+    <div class="card-head"><h2>Court closures</h2><button class="btn btn-primary btn-sm" id="addBlock">+ Close the court</button></div>
+    <p class="muted" style="margin-bottom:12px">Block dates or hours for maintenance, exams, holidays or events. Students cannot book blocked slots, and existing upcoming bookings in them are cancelled.</p>
+    <div id="closures"></div></div></section>
+  <section class="tab-panel" id="tab-audit"><div class="card">
+    <div class="filters"><label>Search<input type="search" id="aQ" placeholder="Person or action text"></label><label>Action<select id="aAction"><option value="">All actions</option></select></label></div>
+    <div id="audit"></div></div></section>
+  <section class="tab-panel" id="tab-depts"><div class="card">
+    <div class="card-head"><h2>Departments</h2><button class="btn btn-primary btn-sm" id="addDept">+ Add department</button></div>
+    <div id="depts"></div>
+  </div></section>
+</main>
+<script src="src/config/app.config.js"></script>
+<script src="src/services/storage.js"></script>
+<script src="src/lib/time.js"></script>
+<script src="src/lib/engine.js"></script>
+<script src="src/data/seed.js"></script>
+<script src="src/services/core.js"></script>
+<script src="src/services/bookingService.js"></script>
+<script src="src/services/directoryService.js"></script>
+<script src="src/services/banService.js"></script>
+<script src="src/services/blockService.js"></script>
+<script src="src/services/auditService.js"></script>
+<script src="src/services/session.js"></script>
+<script src="src/ui/components.js"></script>
+<script src="src/demo/demo-mode.js"></script>
+<script src="src/ui/sports-centre.js"></script>
+</body>
+</html>

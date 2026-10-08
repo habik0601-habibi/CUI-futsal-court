@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUI Futsal Court Booking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/portal.css">
+<link rel="stylesheet" href="assets/css/demo.css">
+</head>
+<body>
+<header class="site-header"><div class="container">
+  <a class="brand" href="index.html"><img class="brand-logo" src="assets/img/logo.png" alt="COMSATS University Islamabad"><span class="brand-name">CUI Futsal Court<small>COMSATS University Islamabad · Booking System</small></span></a>
+  <div class="user-chip" id="userChip"></div>
+</div></header>
+<main class="container page">
+  <section class="card" style="margin-bottom:16px">
+    <h1>Futsal court booking</h1>
+    <p class="muted" style="margin:8px 0 18px">Reserve the university futsal court in one-hour slots. Bookings are approved first by your department sports head, then by the Sports Centre.</p>
+    <div id="homeActions"></div>
+  </section>
+  <div class="kpis">
+    <div class="kpi"><div class="v">Mon–Fri</div><div class="l">Open days (closed weekends)</div></div>
+    <div class="kpi"><div class="v">8 AM – 5 PM</div><div class="l">9 one-hour slots per day</div></div>
+    <div class="kpi"><div class="v">Asia/Karachi</div><div class="l">All times shown in PKT</div></div>
+  </div>
+  <section class="card"><h2>Booking rules</h2>
+    <ul style="margin:10px 0 0 20px;line-height:1.9">
+      <li>Maximum <strong>1 booking per day</strong> and <strong>2 per week</strong> (Mon–Fri) per student.</li>
+      <li>Book up to <strong>7 days ahead</strong>. Past slots cannot be booked.</li>
+      <li>A pending request <strong>holds</strong> the slot. Rejected or expired requests free it.</li>
+      <li>A booking that is not <strong>confirmed</strong> by the time the slot starts expires automatically.</li>
+      <li>Missing a confirmed slot (<strong>no-show</strong>) bans you from booking for <strong>14 days</strong>.</li>
+    </ul>
+  </section>
+  <section class="card"><h2>How approval works</h2>
+    <p style="margin-top:10px"><strong>1.</strong> Student requests a slot &rarr; <strong>2.</strong> Department sports head approves &rarr; <strong>3.</strong> Sports Centre head gives final approval &rarr; <strong>Confirmed</strong>.</p>
+  </section>
+</main>
+<script src="src/config/app.config.js"></script>
+<script src="src/services/storage.js"></script>
+<script src="src/lib/time.js"></script>
+<script src="src/lib/engine.js"></script>
+<script src="src/data/seed.js"></script>
+<script src="src/services/core.js"></script>
+<script src="src/services/bookingService.js"></script>
+<script src="src/services/directoryService.js"></script>
+<script src="src/services/banService.js"></script>
+<script src="src/services/blockService.js"></script>
+<script src="src/services/auditService.js"></script>
+<script src="src/services/session.js"></script>
+<script src="src/ui/components.js"></script>
+<script src="src/demo/demo-mode.js"></script>
+<script src="src/ui/home.js"></script>
+</body>
+</html>

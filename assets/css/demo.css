@@ -1,0 +1,13 @@
+/* Demo mode styles — delete with src/demo */
+.demo-fab { position: fixed; right: 14px; bottom: 14px; z-index: 1500; background: #7a1fa2; color: #fff; border: 0; border-radius: 999px; padding: 10px 16px; font: 700 .78rem var(--font); letter-spacing: 1px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.3); min-height: 44px; }
+.demo-panel { position: fixed; right: 14px; bottom: 66px; z-index: 1500; width: min(320px, calc(100vw - 28px)); max-height: 80vh; overflow: auto; background: #fff; border: 2px solid #7a1fa2; border-radius: 12px; padding: 14px; box-shadow: 0 12px 34px rgba(0,0,0,.3); }
+.demo-panel[hidden] { display: none; }
+.demo-head { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; margin-bottom: 10px; position: relative; padding-right: 30px; }
+.demo-head strong { color: #7a1fa2; text-transform: uppercase; letter-spacing: 1px; }
+.demo-head span { font-size: .72rem; color: var(--muted); width: 100%; }
+.demo-x { position: absolute; top: -6px; right: -6px; background: none; border: 0; font-size: 1.5rem; cursor: pointer; width: 40px; height: 40px; }
+.demo-panel hr { border: 0; border-top: 1px solid var(--line); margin: 12px 0; }
+.demo-clock strong { display: block; font-size: 1rem; color: var(--navy); }
+.demo-clock em { font-size: .75rem; color: var(--muted); }
+.demo-row { display: flex; gap: 6px; margin: 8px 0; flex-wrap: wrap; }
+.demo-row .btn { flex: 1; }
