@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
   U.$('#calendar').addEventListener('click', e => {
-    const slot = e.target.closest('button.slot-available');
+    const slot = e.target.closest('button.slot-available, button.slot-requested');
     if (slot) return openBooking(slot.dataset.date, Number(slot.dataset.hour));
     const pill = e.target.closest('.day-pill');
     if (pill) { activeDate = pill.dataset.day; refresh(); }
