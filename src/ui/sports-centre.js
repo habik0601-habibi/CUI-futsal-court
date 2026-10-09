@@ -165,13 +165,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       <div class="kpi"><div class="v">${bans.length}</div><div class="l">Active bans</div></div>`;
     const cnt = U.$('#cnt-queue'); cnt.hidden = !pend.length; cnt.textContent = pend.length;
 
-    U.$('#queue').innerHTML = pend.length ? `<div class="table-wrap"><table class="tbl"><thead><tr><th>Student</th><th>Department</th><th>Slot</th><th>Competing requests</th><th>Department approved</th><th>Actions</th></tr></thead><tbody>
-      ${pend.map(b => `<tr><td><strong>${esc(b.studentName)}</strong><span class="sub">${esc(b.studentRoll)}</span></td><td>${esc(b.departmentName)}</td>
-        <td>${esc(T.fmtDate(b.date))}<span class="sub">${esc(T.fmtRange(b.hour))}</span></td>
-        <td>${b.rivals.length ? b.rivals.map(r => `<span class="sub" style="color:var(--text)">${esc(r.studentName)} (${esc(r.departmentCode)}) · ${r.status === 'PENDING_SPORTS_CENTRE' ? 'awaiting you' : 'with department'}</span>`).join('') : '<span class="muted">None</span>'}</td>
-        <td>${b.deptDecision ? esc(T.fmtDateTime(b.deptDecision.at)) : ''}<span class="sub">${esc(b.deptDecisionBy || '')}</span></td>
-        <td><div class="actions"><button class="btn btn-success btn-sm" data-ap="${b.id}">Approve</button><button class="btn btn-danger btn-sm" data-rj="${b.id}">Reject</button></div></td></tr>`).join('')}
-      </tbody></table></div>` : U.empty('No bookings are waiting for final approval.');
+    U.$('#queue').innerHTML = pend.length ? U.groupBySlot(pend).map(g => {
+      const mine = g.slice().sort((a, b) => a.createdAt - b.createdAt);
+      const ids = new Set(mine.map(b => b.id));
+      const withDept = g[0].rivals.filter(r => !ids.has(r.id));       // same slot, still waiting at department stage
+      const rows = mine.map(b => `<div class="sg-row"><div class="sg-who"><strong>${esc(b.studentName)}</strong><span class="sub">${esc(b.studentRoll)} · ${esc(b.departmentName)}</span>
+        <span class="sub">Department approved ${b.deptDecision ? esc(T.fmtDateTime(b.deptDecision.at)) : ''} by ${esc(b.deptDecisionBy || '')} · requested ${esc(T.fmtDateTime(b.createdAt))}</span></div>
+        <div class="actions" style="display:flex;gap:6px"><button class="btn btn-success btn-sm" data-ap="${b.id}">Approve</button><button class="btn btn-danger btn-sm" data-rj="${b.id}">Reject</button></div></div>`).join('')
+        + withDept.map(r => `<div class="sg-row muted-row"><div class="sg-who"><strong>${esc(r.studentName)}</strong> (${esc(r.departmentCode)})<span class="sub">Also requested — still waiting for department approval</span></div><span class="badge badge-pending">With department</span></div>`).join('');
+      return U.slotGroup(g[0].date, g[0].hour, g[0].competing + 1, rows);
+    }).join('') : U.empty('No bookings are waiting for final approval.');
 
     U.$('#bans').innerHTML = bans.length ? `<div class="table-wrap"><table class="tbl"><thead><tr><th>Student</th><th>Department</th><th>Banned since</th><th>Ban ends</th><th></th></tr></thead><tbody>
       ${bans.map(x => `<tr><td><strong>${esc(x.student.name)}</strong><span class="sub">${esc(x.student.rollNo)}</span></td><td>${esc(x.departmentName)}</td><td>${esc(T.fmtDateTime(x.startsAt))}</td><td>${esc(T.fmtDateTime(x.endsAt))}</td><td><button class="btn btn-secondary btn-sm" data-lift="${x.id}">Lift ban</button></td></tr>`).join('')}

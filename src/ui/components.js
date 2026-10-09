@@ -82,6 +82,23 @@
     });
   }
 
+  /** Group bookings by slot (date+hour), earliest slot first. */
+  function groupBySlot(list) {
+    const map = new Map();
+    list.forEach(b => { const k = b.date + '|' + b.hour; if (!map.has(k)) map.set(k, []); map.get(k).push(b); });
+    return [...map.values()].sort((a, b) => (a[0].date + String(a[0].hour).padStart(2, '0')).localeCompare(b[0].date + String(b[0].hour).padStart(2, '0')));
+  }
+
+  /** A card for one slot: big time + date, a clear flag when several students want it, and the rows inside. */
+  function slotGroup(date, hour, total, rowsHtml) {
+    const contested = total > 1;
+    return `<section class="sgroup ${contested ? 'contested' : ''}">
+      <header class="sg-head">
+        <div><div class="sg-time">${esc(T.fmtRange(hour))}</div><div class="sg-date">${esc(T.fmtDate(date))}</div></div>
+        <div class="sg-flag ${contested ? 'hot' : ''}">${contested ? '⚠ ' + total + ' students requested this slot — choose one' : '1 request'}</div>
+      </header><div class="sg-body">${rowsHtml}</div></section>`;
+  }
+
   function empty(msg) { return `<div class="empty"><div class="empty-ic">∅</div><p>${esc(msg)}</p></div>`; }
 
   /** Ensures the logged-in demo user has the expected role; renders header chip. Returns user or null. */
@@ -126,5 +143,5 @@
     setInterval(fn, 30000);
   }
 
-  CUI.ui = { esc, $, $$, badge, statusDetail, toast, modal, rejectModal, empty, guard, tabs, fmtWhen, autoRefresh, ROLE_LABEL, ROLE_HOME };
+  CUI.ui = { esc, $, $$, badge, statusDetail, toast, modal, rejectModal, groupBySlot, slotGroup, empty, guard, tabs, fmtWhen, autoRefresh, ROLE_LABEL, ROLE_HOME };
 })();

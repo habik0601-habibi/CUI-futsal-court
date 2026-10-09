@@ -32,11 +32,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       <div class="kpi"><div class="v">${bans.length}</div><div class="l">Students currently banned</div></div>`;
     const cnt = U.$('#cnt-queue'); cnt.hidden = !pending.length; cnt.textContent = pending.length;
 
-    U.$('#queue').innerHTML = pending.length ? `<div class="table-wrap"><table class="tbl"><thead><tr><th>Student</th><th>Slot</th><th>Competition</th><th>Requested</th><th>Actions</th></tr></thead><tbody>
-      ${pending.map(b => `<tr><td><strong>${esc(b.studentName)}</strong><span class="sub">${esc(b.studentRoll)}</span></td>
-        <td>${esc(T.fmtDate(b.date))}<span class="sub">${esc(T.fmtRange(b.hour))}</span></td><td>${b.competing ? `<span class="badge badge-pending">${b.competing} other request${b.competing > 1 ? 's' : ''}</span>` : '<span class="muted">None</span>'}</td><td>${esc(T.fmtDateTime(b.createdAt))}</td>
-        <td><div class="actions"><button class="btn btn-success btn-sm" data-ap="${b.id}">Approve</button><button class="btn btn-danger btn-sm" data-rj="${b.id}">Reject</button></div></td></tr>`).join('')}
-      </tbody></table></div>` : U.empty('No bookings are waiting for your approval.');
+    U.$('#queue').innerHTML = pending.length ? U.groupBySlot(pending).map(g => {
+      const rows = g.slice().sort((a, b) => a.createdAt - b.createdAt).map(b => `<div class="sg-row"><div class="sg-who"><strong>${esc(b.studentName)}</strong><span class="sub">${esc(b.studentRoll)} · requested ${esc(T.fmtDateTime(b.createdAt))}</span></div>
+        <div class="actions" style="display:flex;gap:6px"><button class="btn btn-success btn-sm" data-ap="${b.id}">Approve</button><button class="btn btn-danger btn-sm" data-rj="${b.id}">Reject</button></div></div>`).join('');
+      const total = g[0].competing + 1;
+      const others = total - g.length;
+      return U.slotGroup(g[0].date, g[0].hour, total, rows + (others > 0 ? `<div class="sg-row muted-row">${others} more request${others > 1 ? 's' : ''} for this slot from other students (visible to the Sports Centre).</div>` : ''));
+    }).join('') : U.empty('No bookings are waiting for your approval.');
 
     U.$('#history').innerHTML = history.length ? `<div class="table-wrap"><table class="tbl"><thead><tr><th>Ref</th><th>Student</th><th>Slot</th><th>Status</th><th>Outcome</th></tr></thead><tbody>
       ${history.map(b => `<tr><td>${esc(b.ref)}</td><td><strong>${esc(b.studentName)}</strong><span class="sub">${esc(b.studentRoll)}</span></td>
