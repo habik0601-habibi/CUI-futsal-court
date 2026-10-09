@@ -32,9 +32,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       <div class="kpi"><div class="v">${bans.length}</div><div class="l">Students currently banned</div></div>`;
     const cnt = U.$('#cnt-queue'); cnt.hidden = !pending.length; cnt.textContent = pending.length;
 
-    U.$('#queue').innerHTML = pending.length ? `<div class="table-wrap"><table class="tbl"><thead><tr><th>Student</th><th>Slot</th><th>Requested</th><th>Actions</th></tr></thead><tbody>
+    U.$('#queue').innerHTML = pending.length ? `<div class="table-wrap"><table class="tbl"><thead><tr><th>Student</th><th>Slot</th><th>Competition</th><th>Requested</th><th>Actions</th></tr></thead><tbody>
       ${pending.map(b => `<tr><td><strong>${esc(b.studentName)}</strong><span class="sub">${esc(b.studentRoll)}</span></td>
-        <td>${esc(T.fmtDate(b.date))}<span class="sub">${esc(T.fmtRange(b.hour))}</span></td><td>${esc(T.fmtDateTime(b.createdAt))}</td>
+        <td>${esc(T.fmtDate(b.date))}<span class="sub">${esc(T.fmtRange(b.hour))}</span></td><td>${b.competing ? `<span class="badge badge-pending">${b.competing} other request${b.competing > 1 ? 's' : ''}</span>` : '<span class="muted">None</span>'}</td><td>${esc(T.fmtDateTime(b.createdAt))}</td>
         <td><div class="actions"><button class="btn btn-success btn-sm" data-ap="${b.id}">Approve</button><button class="btn btn-danger btn-sm" data-rj="${b.id}">Reject</button></div></td></tr>`).join('')}
       </tbody></table></div>` : U.empty('No bookings are waiting for your approval.');
 

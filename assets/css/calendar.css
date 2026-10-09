@@ -37,3 +37,6 @@
 }
 
 .slot-blocked { background: repeating-linear-gradient(45deg, #fbe7e4, #fbe7e4 6px, #f6d5d0 6px, #f6d5d0 12px); border-color: #e7b7b1; color: #7d241a; }
+
+.slot-requested { background: #fff; border-color: var(--warn); color: #6b4a0f; cursor: pointer; }
+.slot-requested:hover { background: var(--warn-soft); }

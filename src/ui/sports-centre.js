@@ -59,11 +59,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!T.isOpenDay(T.todayPK())) weekStart = T.addDays(weekStart, 7);
 
   function calSlot(s) {
-    const lbl = T.fmtHour(s.hour), bk = s.booking;
+    const lbl = T.fmtHour(s.hour), es = s.entries || [];
     let cls = 'slot-' + s.state, sub;
-    if (bk) sub = esc(bk.studentName) + ' · ' + esc(bk.departmentCode);
+    const conf = es.find(x => x.status === 'CONFIRMED' || x.status === 'NO_SHOW');
+    if (conf) sub = esc(conf.studentName) + ' · ' + esc(conf.departmentCode);
+    else if (es.length) sub = es.length > 1 ? es.length + ' requests' : esc(es[0].studentName) + ' · request';
     else sub = { available: 'Free', blocked: 'Closed', past: 'Past', beyond: 'Free' }[s.state] || '';
-    if (s.state === 'past' && bk) cls += ' slot-booked';
+    if (s.state === 'past' && es.length) cls += ' slot-booked';
     return `<button type="button" class="slot ${cls}" style="cursor:pointer" data-date="${s.date}" data-hour="${s.hour}"><strong>${lbl}</strong><small>${sub}</small></button>`;
   }
 
@@ -81,31 +83,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     U.$('#calendar').innerHTML = grid + slider;
   }
 
+  /** Approve a booking. If other requests compete for the slot, warn that they will be declined. */
+  function approveFlow(b, others) {
+    if (!others || !others.length) return toastRun(() => S.bookings.approve(user.id, b.id), 'Booking confirmed.');
+    U.modal({
+      title: 'Approve this request?',
+      body: `<div class="summary"><div><span>Approving</span><strong>${esc(b.studentName)} (${esc(b.departmentCode || '')})</strong></div><div><span>Slot</span><strong>${esc(U.fmtWhen(b))}</strong></div></div>
+        <div class="alert alert-warn"><strong>${others.length} other request${others.length > 1 ? 's' : ''} for this slot will be declined automatically:</strong>${others.map(o => esc(o.studentName) + ' (' + esc(o.departmentCode) + ')').join(', ')}</div>`,
+      actions: [{ label: 'Cancel', kind: 'secondary' }, { label: 'Approve and decline others', kind: 'success', onClick: async close => { close(); await toastRun(() => S.bookings.approve(user.id, b.id), 'Booking confirmed. Other requests declined.'); } }]
+    });
+  }
+
   function slotDetails(date, hour) {
     const s = calWeek.days.find(d => d.date === date).slots.find(x => x.hour === hour);
-    const b = s.booking, now = T.nowMs();
+    const es = s.entries || [], now = T.nowMs();
     const when = `<div class="summary"><div><span>Date</span><strong>${esc(T.fmtDate(date))}</strong></div><div><span>Time</span><strong>${esc(T.fmtRange(hour))}</strong></div></div>`;
-    if (!b) {
-      const msg = s.state === 'blocked' ? `Court closed: ${esc(s.blockReason || '')}` : s.state === 'past' ? 'Nobody held this slot.' : 'This slot is free. Nobody has booked it.';
+    if (!es.length) {
+      const msg = s.state === 'blocked' ? `Court closed: ${esc(s.blockReason || '')}` : s.state === 'past' ? 'Nobody booked or requested this slot.' : 'This slot is free. Nobody has requested it.';
       return U.modal({ title: s.state === 'blocked' ? 'Court closed' : 'Free slot', body: when + '<p>' + msg + '</p>' });
     }
     const dec = (label, d, by) => d ? `<div><span>${label}</span><strong>${esc(by || '')}<br><small>${esc(T.fmtDateTime(d.at))}</small></strong></div>` : '';
-    const acts = [{ label: 'Close', kind: 'secondary' }];
-    if (b.status === 'PENDING_SPORTS_CENTRE') {
-      acts.push({ label: 'Reject', kind: 'danger', onClick: close => { close(); U.rejectModal(b, reason => S.bookings.reject(user.id, b.id, reason).then(() => { U.toast('Booking rejected.', 'success'); return refresh(); }).catch(err => { U.toast(err.message, 'error'); return refresh(); })); } });
-      acts.push({ label: 'Approve', kind: 'success', onClick: async close => { close(); await toastRun(() => S.bookings.approve(user.id, b.id), 'Booking confirmed.'); } });
-    }
-    if (b.status === 'CONFIRMED' && T.slotEndMs(b.date, b.hour) <= now) {
-      acts.push({ label: 'Mark no-show', kind: 'danger', onClick: async close => { close(); await toastRun(() => S.bookings.markNoShow(user.id, b.id), 'Marked no-show. Student banned.'); } });
-    }
-    return U.modal({
-      title: 'Booking details',
-      body: when + `<div class="summary">
+    const block = b => {
+      const btns = [];
+      if (b.status === 'PENDING_SPORTS_CENTRE') btns.push(`<button class="btn btn-success btn-sm" data-do="approve" data-id="${b.id}">Approve</button><button class="btn btn-danger btn-sm" data-do="reject" data-id="${b.id}">Reject</button>`);
+      if (b.status === 'CONFIRMED' && T.slotEndMs(b.date, b.hour) <= now) btns.push(`<button class="btn btn-danger btn-sm" data-do="noshow" data-id="${b.id}">Mark no-show</button>`);
+      return `<div class="summary" style="margin-bottom:10px">
         <div><span>Student</span><strong>${esc(b.studentName)}</strong></div><div><span>Roll no.</span><strong>${esc(b.studentRoll)}</strong></div>
         <div><span>Department</span><strong>${esc(b.departmentName)}</strong></div><div><span>Reference</span><strong>${esc(b.ref)}</strong></div>
         <div><span>Status</span><strong>${U.badge(b.status)}</strong></div><div><span>Requested</span><strong>${esc(T.fmtDateTime(b.createdAt))}</strong></div>
-        ${dec('Department approval', b.deptDecision, b.deptDecisionBy)}${dec('Sports centre decision', b.scDecision, b.scDecisionBy)}</div>`,
-      actions: acts
+        ${dec('Department approval', b.deptDecision, b.deptDecisionBy)}${dec('Sports centre decision', b.scDecision, b.scDecisionBy)}
+        ${btns.length ? '<div style="display:flex;gap:8px;justify-content:flex-end;padding-top:8px">' + btns.join('') + '</div>' : ''}</div>`;
+    };
+    const pend = es.filter(x => x.status.startsWith('PENDING'));
+    const head = pend.length > 1 ? `<div class="alert alert-info"><strong>${pend.length} competing requests</strong>Only one can be confirmed. Approving one declines the rest.</div>` : '';
+    const m = U.modal({ title: es.length > 1 ? 'Requests for this slot' : 'Booking details', body: when + head + es.map(block).join('') });
+    m.body.addEventListener('click', e => {
+      const btn = e.target.closest('[data-do]');
+      if (!btn) return;
+      const b = es.find(x => x.id === btn.dataset.id);
+      m.close();
+      if (btn.dataset.do === 'approve') approveFlow(b, es.filter(x => x.id !== b.id && x.status.startsWith('PENDING')));
+      if (btn.dataset.do === 'reject') U.rejectModal(b, reason => S.bookings.reject(user.id, b.id, reason).then(() => { U.toast('Booking rejected.', 'success'); return refresh(); }).catch(err => { U.toast(err.message, 'error'); return refresh(); }));
+      if (btn.dataset.do === 'noshow') toastRun(() => S.bookings.markNoShow(user.id, b.id), 'Marked no-show. Student banned.');
     });
   }
 
@@ -146,9 +165,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       <div class="kpi"><div class="v">${bans.length}</div><div class="l">Active bans</div></div>`;
     const cnt = U.$('#cnt-queue'); cnt.hidden = !pend.length; cnt.textContent = pend.length;
 
-    U.$('#queue').innerHTML = pend.length ? `<div class="table-wrap"><table class="tbl"><thead><tr><th>Student</th><th>Department</th><th>Slot</th><th>Department approved</th><th>Actions</th></tr></thead><tbody>
+    U.$('#queue').innerHTML = pend.length ? `<div class="table-wrap"><table class="tbl"><thead><tr><th>Student</th><th>Department</th><th>Slot</th><th>Competing requests</th><th>Department approved</th><th>Actions</th></tr></thead><tbody>
       ${pend.map(b => `<tr><td><strong>${esc(b.studentName)}</strong><span class="sub">${esc(b.studentRoll)}</span></td><td>${esc(b.departmentName)}</td>
         <td>${esc(T.fmtDate(b.date))}<span class="sub">${esc(T.fmtRange(b.hour))}</span></td>
+        <td>${b.rivals.length ? b.rivals.map(r => `<span class="sub" style="color:var(--text)">${esc(r.studentName)} (${esc(r.departmentCode)}) · ${r.status === 'PENDING_SPORTS_CENTRE' ? 'awaiting you' : 'with department'}</span>`).join('') : '<span class="muted">None</span>'}</td>
         <td>${b.deptDecision ? esc(T.fmtDateTime(b.deptDecision.at)) : ''}<span class="sub">${esc(b.deptDecisionBy || '')}</span></td>
         <td><div class="actions"><button class="btn btn-success btn-sm" data-ap="${b.id}">Approve</button><button class="btn btn-danger btn-sm" data-rj="${b.id}">Reject</button></div></td></tr>`).join('')}
       </tbody></table></div>` : U.empty('No bookings are waiting for final approval.');
@@ -184,7 +204,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   U.$('#queue').addEventListener('click', async e => {
     const ap = e.target.closest('[data-ap]'), rj = e.target.closest('[data-rj]');
-    if (ap) { ap.disabled = true; toastRun(() => S.bookings.approve(user.id, ap.dataset.ap), 'Booking confirmed.'); }
+    if (ap) {
+      const b = (await S.bookings.listAll(user.id, {})).find(x => x.id === ap.dataset.ap);
+      if (b) approveFlow(b, b.rivals);
+    }
     if (rj) {
       const b = (await S.bookings.listAll(user.id, {})).find(x => x.id === rj.dataset.rj);
       if (b) U.rejectModal(b, reason => S.bookings.reject(user.id, b.id, reason).then(() => { U.toast('Booking rejected.', 'success'); return refresh(); }).catch(err => { U.toast(err.message, 'error'); return refresh(); }));

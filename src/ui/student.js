@@ -14,15 +14,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const lbl = T.fmtHour(s.hour);
     let cls = 'slot-' + s.state, sub = '', tag = 'div', attrs = '';
     switch (s.state) {
-      case 'available': sub = 'Available'; tag = 'button'; attrs = `data-date="${s.date}" data-hour="${s.hour}" aria-label="Book ${T.fmtDate(s.date)} ${lbl}"`; break;
-      case 'held': sub = 'Held'; break;
+      case 'available': sub = 'Open'; tag = 'button'; attrs = `data-date="${s.date}" data-hour="${s.hour}" aria-label="Book ${T.fmtDate(s.date)} ${lbl}"`; break;
+      case 'requested': sub = `${s.requests} request${s.requests > 1 ? 's' : ''} · open`; tag = 'button'; attrs = `data-date="${s.date}" data-hour="${s.hour}" aria-label="Request ${T.fmtDate(s.date)} ${lbl}"`; break;
       case 'booked': sub = 'Booked'; break;
       case 'past': sub = 'Past'; break;
       case 'beyond': sub = 'Not open yet'; break;
       case 'blocked': sub = 'Court closed'; break;
       default: sub = 'Closed';
     }
-    if (s.mine) { cls += ' slot-mine'; sub = s.status === 'CONFIRMED' ? 'Your booking ✓' : 'Your request'; }
+    if (s.mine) { cls += ' slot-mine'; sub = s.status === 'CONFIRMED' ? 'Your booking ✓' : 'Your request'; tag = 'div'; attrs = ''; }
     if (s.state === 'blocked' && s.blockReason) attrs += ` title="${esc(s.blockReason)}"`;
     return `<${tag} class="slot ${cls}" ${attrs} ${tag === 'button' ? 'type="button"' : ''}><strong>${lbl}</strong><small>${sub}</small></${tag}>`;
   }
@@ -86,8 +86,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     const m = U.modal({
-      title: 'Confirm booking request',
-      body: `${sum}<div class="alert alert-info">Your request will be sent to your <b>department sports head</b>, then to the <b>sports centre</b>. The slot is held for you meanwhile. If it is not confirmed before the slot starts, it expires.</div>`,
+      title: 'Request this slot',
+      body: `${sum}<div class="alert alert-info">Your request will be sent to your <b>department sports head</b>, then to the <b>sports centre</b>. Other students can request the same slot. The heads decide whose request is approved, and only a <b>confirmed</b> booking locks the slot. If yours is not confirmed before the slot starts, it expires.</div>`,
       actions: [
         { label: 'Cancel', kind: 'secondary' },
         { label: 'Request this slot', kind: 'success', onClick: async close => {

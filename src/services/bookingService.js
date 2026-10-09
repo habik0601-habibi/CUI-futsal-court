@@ -17,12 +17,16 @@
           date,
           slots: E.hours().map(hour => {
             const st = E.slotState(state.bookings, date, hour, now, state.blocks);
-            const bk = E.holder(state.bookings, date, hour);
-            const mine = !!(bk && viewer && bk.studentId === viewer.id);
+            const confirmed = E.holder(state.bookings, date, hour);
+            const reqs = E.requests(state.bookings, date, hour);
+            const own = viewer && viewer.role === 'STUDENT' ? [confirmed, ...reqs].find(x => x && x.studentId === viewer.id) || null : null;
+            // students see only their own entry; heads see everything
+            const entries = (seeNames ? [confirmed, ...reqs].filter(Boolean) : own ? [own] : []).map(x => K.enrich(state, x));
             return {
-              date, hour, state: st, mine, blockReason: st === 'blocked' ? E.blockFor(state.blocks, date, hour).reason : null,
-              status: bk ? bk.status : null,
-              booking: bk && (mine || seeNames) ? K.enrich(state, bk) : null
+              date, hour, state: st, mine: !!own, blockReason: st === 'blocked' ? E.blockFor(state.blocks, date, hour).reason : null,
+              status: own ? own.status : confirmed ? confirmed.status : null,
+              requests: reqs.length,                              // number of pending competing requests (no names)
+              booking: entries[0] || null, entries
             };
           })
         });
@@ -80,6 +84,7 @@
       return state.bookings
         .filter(b => (!f.from || b.date >= f.from) && (!f.to || b.date <= f.to) && (!f.departmentId || b.departmentId === f.departmentId) && (!f.status || b.status === f.status))
         .map(b => K.enrich(state, b))
+        .map(b => b.competing ? { ...b, rivals: E.requests(state.bookings, b.date, b.hour).filter(x => x.id !== b.id).map(x => { const e = K.enrich(state, x); return { id: x.id, studentName: e.studentName, departmentCode: e.departmentCode, status: x.status }; }) } : { ...b, rivals: [] })
         .filter(b => !q || b.studentName.toLowerCase().includes(q) || (b.studentRoll || '').toLowerCase().includes(q) || b.ref.toLowerCase().includes(q))
         .sort(sortDesc);
     },
@@ -135,6 +140,14 @@
     } else {
       b.scDecision = decision;
       b.status = kind === 'approve' ? 'CONFIRMED' : 'REJECTED';
+      if (kind === 'approve') {
+        // The slot is now locked: every other pending request for it loses automatically.
+        E.requests(state.bookings, b.date, b.hour).filter(x => x.id !== b.id).forEach(x => {
+          x.status = 'REJECTED'; x.rejectedAt = 'SPORTS_CENTRE';
+          x.scDecision = { by: actor.id, at: now, reason: 'This slot was given to another request.' };
+          K.audit(state, actorId, 'SC_REJECTED', `Auto-rejected ${x.ref} (${K.userOf(state, x.studentId).name}): slot given to ${b.ref}`);
+        });
+      }
       if (kind === 'reject') b.rejectedAt = 'SPORTS_CENTRE';
     }
     K.audit(state, actorId, (isDept ? 'DEPT_' : 'SC_') + (kind === 'approve' ? 'APPROVED' : 'REJECTED'), `${isDept ? 'Department' : 'Sports centre'} ${kind === 'approve' ? 'approved' : 'rejected'} ${b.ref}${decision.reason ? ' — ' + decision.reason : ''}`);

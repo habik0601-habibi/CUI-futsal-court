@@ -30,6 +30,7 @@
     const s = userOf(state, b.studentId), d = deptOf(state, b.departmentId);
     return {
       ...b,
+      competing: CUI.engine.isPending(b) ? CUI.engine.requests(state.bookings, b.date, b.hour).filter(x => x.id !== b.id).length : 0,
       studentName: s ? s.name : 'Unknown', studentRoll: s ? s.rollNo : '', departmentName: d ? d.name : 'Unknown', departmentCode: d ? d.code : '',
       deptDecisionBy: b.deptDecision ? (userOf(state, b.deptDecision.by) || {}).name : null,
       scDecisionBy: b.scDecision ? (userOf(state, b.scDecision.by) || {}).name : null

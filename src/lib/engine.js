@@ -2,7 +2,7 @@
 (function () {
   const C = CUI.config, T = CUI.time;
   const PENDING = ['PENDING_DEPARTMENT', 'PENDING_SPORTS_CENTRE'];
-  const HOLDING = [...PENDING, 'CONFIRMED', 'NO_SHOW'];       // statuses that occupy a slot
+  const HOLDING = ['CONFIRMED', 'NO_SHOW'];                   // only these lock a slot; pending requests compete for it
   const COUNTING = [...PENDING, 'CONFIRMED', 'NO_SHOW'];      // statuses that count toward limits (NO_SHOW kept: student is banned anyway)
 
   const E = {
@@ -31,6 +31,9 @@
       return (blocks || []).find(b => date >= b.dateFrom && date <= b.dateTo && (b.hourFrom == null || (hour >= b.hourFrom && hour <= b.hourTo))) || null;
     },
 
+    /** Pending requests competing for a slot. */
+    requests(bookings, date, hour) { return bookings.filter(b => b.date === date && b.hour === hour && PENDING.includes(b.status)); },
+
     holder(bookings, date, hour) { return bookings.find(b => b.date === date && b.hour === hour && HOLDING.includes(b.status)) || null; },
 
     /** Visible state of one slot. */
@@ -41,8 +44,8 @@
       if (start <= nowMs) return 'past';
       if (date > T.addDays(T.todayPK(nowMs), C.maxDaysAhead)) return 'beyond';
       if (E.blockFor(blocks, date, hour)) return 'blocked';
-      if (!bk) return 'available';
-      return bk.status === 'CONFIRMED' ? 'booked' : 'held';
+      if (!bk) return E.requests(bookings, date, hour).length ? 'requested' : 'available';
+      return 'booked';
     },
 
     usage(bookings, studentId, date) {
@@ -66,7 +69,7 @@
       if (date > latest) return { code: 'OUTSIDE_WINDOW', message: `Rule: ${C.maxDaysAhead}-day booking window. You can only book up to ${C.maxDaysAhead} days ahead (latest bookable date: ${T.fmtDate(latest)}).` };
       const blk = E.blockFor(blocks, date, hour);
       if (blk) return { code: 'BLOCKED', message: `Rule: court closure. The court is closed for this slot${blk.reason ? ' (' + blk.reason + ')' : ''}.` };
-      if (E.holder(bookings, date, hour)) return { code: 'SLOT_TAKEN', message: 'This slot is already held or booked by someone else. Please choose another slot.' };
+      if (E.holder(bookings, date, hour)) return { code: 'SLOT_TAKEN', message: 'This slot has already been confirmed for another student. Please choose another slot.' };
       const u = E.usage(bookings, studentId, date);
       if (u.day.length >= C.maxPerDay) {
         const x = u.day[0];

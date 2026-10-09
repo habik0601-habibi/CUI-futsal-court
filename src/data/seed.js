@@ -56,6 +56,8 @@
         mk('s11', p3, 10, 'EXPIRED', { expiredAt: now - 2e8 }),
         mk('s13', p3, 16, 'NO_SHOW', { deptDecision: dd('h-phy', now - 4e8), scDecision: dd('sc1', now - 39e7), noShowMarkedAt: now - 2 * 86400000 }),
         mk('s3', base, 15, 'PENDING_DEPARTMENT'),
+        mk('s9', f1, 10, 'PENDING_DEPARTMENT'),                     // competes with s1 for the same slot
+        mk('s12', f1, 12, 'PENDING_DEPARTMENT'),                    // competes with s4 for the same slot
         mk('s3', T.addDays(base, 1), 16, 'CONFIRMED', { deptDecision: dd('h-cs', now - 7200000), scDecision: dd('sc1', now - 3600000) })
       ];
       const bans = [{ id: 'ban1', studentId: 's13', bookingId: bookings.find(b => b.status === 'NO_SHOW').id, startsAt: now - 2 * 86400000, endsAt: now - 2 * 86400000 + CUI.config.banDays * 86400000 }];
