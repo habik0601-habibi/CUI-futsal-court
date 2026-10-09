@@ -47,7 +47,7 @@
   function modal(opts) {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
-    overlay.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="${esc(opts.title)}">
+    overlay.innerHTML = `<div class="modal ${opts.wide ? 'wide' : ''}" role="dialog" aria-modal="true" aria-label="${esc(opts.title)}">
       <div class="modal-head"><h3>${esc(opts.title)}</h3><button class="modal-x" aria-label="Close">&times;</button></div>
       <div class="modal-body">${opts.body || ''}</div>
       <div class="modal-foot"></div></div>`;

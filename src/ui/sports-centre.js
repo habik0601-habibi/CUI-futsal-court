@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const canNoShow = b.status === 'CONFIRMED' && T.slotEndMs(b.date, b.hour) <= now;
         return `<tr><td>${esc(b.ref)}</td><td><strong>${esc(b.studentName)}</strong><span class="sub">${esc(b.studentRoll)}</span></td><td>${esc(b.departmentCode)}</td>
         <td>${esc(T.fmtDate(b.date))}<span class="sub">${esc(T.fmtRange(b.hour))}</span></td><td>${U.badge(b.status)}</td><td>${esc(outcome(b))}</td>
-        <td>${canNoShow ? `<button class="btn btn-danger btn-sm" data-ns="${b.id}">Mark no-show</button>` : ''}</td></tr>`;
+        <td><button class="btn btn-secondary btn-sm" data-form="${b.id}">Form</button> ${canNoShow ? `<button class="btn btn-danger btn-sm" data-ns="${b.id}">Mark no-show</button>` : ''}</td></tr>`;
       }).join('')}</tbody></table></div>` : U.empty('No bookings match these filters.');
   }
 
@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     const dec = (label, d, by) => d ? `<div><span>${label}</span><strong>${esc(by || '')}<br><small>${esc(T.fmtDateTime(d.at))}</small></strong></div>` : '';
     const block = b => {
-      const btns = [];
+      const btns = [`<button class="btn btn-secondary btn-sm" data-form="${b.id}">View form</button>`];
       if (b.status === 'PENDING_SPORTS_CENTRE') btns.push(`<button class="btn btn-success btn-sm" data-do="approve" data-id="${b.id}">Approve</button><button class="btn btn-danger btn-sm" data-do="reject" data-id="${b.id}">Reject</button>`);
       if (b.status === 'CONFIRMED' && T.slotEndMs(b.date, b.hour) <= now) btns.push(`<button class="btn btn-danger btn-sm" data-do="noshow" data-id="${b.id}">Mark no-show</button>`);
       return `<div class="summary" style="margin-bottom:10px">
@@ -169,9 +169,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       const mine = g.slice().sort((a, b) => a.createdAt - b.createdAt);
       const ids = new Set(mine.map(b => b.id));
       const withDept = g[0].rivals.filter(r => !ids.has(r.id));       // same slot, still waiting at department stage
-      const rows = mine.map(b => `<div class="sg-row"><div class="sg-who"><strong>${esc(b.studentName)}</strong><span class="sub">${esc(b.studentRoll)} · ${esc(b.departmentName)}</span>
+      const rows = mine.map(b => `<div class="sg-row"><div class="sg-who"><strong>${esc(b.studentName)}</strong><span class="sub">${esc(b.studentRoll)} · ${esc(b.departmentName)}</span><span class="sub">Purpose: <strong>${esc(CUI.formView.purposeLabel(b.form) || '—')}</strong></span>
         <span class="sub">Department approved ${b.deptDecision ? esc(T.fmtDateTime(b.deptDecision.at)) : ''} by ${esc(b.deptDecisionBy || '')} · requested ${esc(T.fmtDateTime(b.createdAt))}</span></div>
-        <div class="actions" style="display:flex;gap:6px"><button class="btn btn-success btn-sm" data-ap="${b.id}">Approve</button><button class="btn btn-danger btn-sm" data-rj="${b.id}">Reject</button></div></div>`).join('')
+        <div class="actions" style="display:flex;gap:6px"><button class="btn btn-secondary btn-sm" data-form="${b.id}">View form</button><button class="btn btn-success btn-sm" data-ap="${b.id}">Approve</button><button class="btn btn-danger btn-sm" data-rj="${b.id}">Reject</button></div></div>`).join('')
         + withDept.map(r => `<div class="sg-row muted-row"><div class="sg-who"><strong>${esc(r.studentName)}</strong> (${esc(r.departmentCode)})<span class="sub">Also requested — still waiting for department approval</span></div><span class="badge badge-pending">With department</span></div>`).join('');
       return U.slotGroup(g[0].date, g[0].hour, g[0].competing + 1, rows);
     }).join('') : U.empty('No bookings are waiting for final approval.');
@@ -282,6 +282,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   U.$('#fQ').addEventListener('input', renderAll);
   U.$('#fClear').onclick = () => { ['fFrom', 'fTo', 'fDept', 'fStatus', 'fQ'].forEach(id => { U.$('#' + id).value = ''; }); renderAll(); };
 
+  CUI.formView.bind(user.id);
   U.tabs();
   U.autoRefresh(refresh);
   refresh();

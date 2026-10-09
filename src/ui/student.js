@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div><h4>${esc(T.fmtDate(b.date))} · ${esc(T.fmtRange(b.hour))}</h4>
           <div class="meta">Ref ${esc(b.ref)} · requested ${esc(T.fmtDateTime(b.createdAt))}</div>
           <div class="state">${esc(U.statusDetail(b))}</div></div>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${U.badge(b.status)}${canCancel(b) ? `<button class="btn btn-danger btn-sm" data-cancel="${b.id}">Cancel booking</button>` : ''}</div></div>`).join('')}</div>` : U.empty('You have no bookings yet. Pick a slot in “Book a slot”.');
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${U.badge(b.status)}<button class="btn btn-secondary btn-sm" data-form="${b.id}">View form</button>${canCancel(b) ? `<button class="btn btn-danger btn-sm" data-cancel="${b.id}">Cancel booking</button>` : ''}</div></div>`).join('')}</div>` : U.empty('You have no bookings yet. Pick a slot in “Book a slot”.');
   }
 
   async function refresh() {
@@ -77,34 +77,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function openBooking(date, hour) {
     const err = await S.bookings.checkRules(user.id, date, hour);
-    const sum = `<div class="summary"><div><span>Date</span><strong>${esc(T.fmtDate(date))}</strong></div>
-      <div><span>Time</span><strong>${esc(T.fmtRange(hour))}</strong></div>
-      <div><span>Court</span><strong>${esc(C.courtName)}</strong></div>
-      <div><span>Department</span><strong>${esc(user.department.name)}</strong></div></div>`;
     if (err) {
-      U.modal({ title: 'Cannot book this slot', body: `${sum}<div class="alert alert-danger" role="alert"><strong>Booking blocked</strong>${esc(err.message)}</div>`, actions: [{ label: 'Close', kind: 'secondary' }] });
+      const sum = `<div class="summary"><div><span>Date</span><strong>${esc(T.fmtDate(date))}</strong></div><div><span>Time</span><strong>${esc(T.fmtRange(hour))}</strong></div></div>`;
+      U.modal({ title: 'Cannot request this slot', body: `${sum}<div class="alert alert-danger" role="alert"><strong>Request blocked</strong>${esc(err.message)}</div>`, actions: [{ label: 'Close', kind: 'secondary' }] });
       return;
     }
-    const m = U.modal({
-      title: 'Request this slot',
-      body: `${sum}<div class="alert alert-info">Your request will be sent to your <b>department sports head</b>, then to the <b>sports centre</b>. Other students can request the same slot. The heads decide whose request is approved, and only a <b>confirmed</b> booking locks the slot. If yours is not confirmed before the slot starts, it expires.</div>`,
-      actions: [
-        { label: 'Cancel', kind: 'secondary' },
-        { label: 'Request this slot', kind: 'success', onClick: async close => {
-          try {
-            const b = await S.bookings.createBooking(user.id, date, hour);
-            close();
-            U.modal({ title: 'Request submitted', body: `<div class="summary"><div><span>Reference</span><strong>${esc(b.ref)}</strong></div><div><span>When</span><strong>${esc(U.fmtWhen(b))}</strong></div><div><span>Status</span><strong>${esc(U.statusDetail(b))}</strong></div></div><p class="muted">Track progress in “My bookings”.</p>`,
-              actions: [{ label: 'View my bookings', kind: 'primary', onClick: c => { c(); U.tabsShow('mine'); } }] });
-          } catch (e) {
-            m.body.innerHTML = `${sum}<div class="alert alert-danger" role="alert"><strong>Booking blocked</strong>${esc(e.message)}</div>`;
-          }
-          await refresh();
-        } }
-      ]
-    });
+    CUI.requestForm.open({ user, date, hour, onSubmit: async form => {
+      let b;
+      try { b = await S.bookings.createBooking(user.id, date, hour, form); } catch (e) { await refresh(); throw e; }
+      U.modal({ title: 'Request submitted', body: `<div class="summary"><div><span>Reference</span><strong>${esc(b.ref)}</strong></div><div><span>When</span><strong>${esc(U.fmtWhen(b))}</strong></div><div><span>Status</span><strong>${esc(U.statusDetail(b))}</strong></div></div><p class="muted">Your form was sent with the request. Track progress in “My bookings”.</p>`,
+        actions: [{ label: 'View my bookings', kind: 'primary', onClick: c => { c(); U.tabsShow('mine'); } }] });
+      await refresh();
+    } });
   }
 
+  CUI.formView.bind(user.id);
   U.tabsShow = U.tabs();
   U.$('#myBookings').addEventListener('click', async e => {
     const btn = e.target.closest('[data-cancel]');

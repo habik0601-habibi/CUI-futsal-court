@@ -47,20 +47,32 @@
       return E.checkBookingRules({ bookings: state.bookings, bans: state.bans, blocks: state.blocks, studentId, date, hour, nowMs: now });
     },
 
-    async createBooking(studentId, date, hour) {
+    async createBooking(studentId, date, hour, form) {
       const { state, now } = K.read();                       // re-read right before write = double-booking guard
       const student = K.userOf(state, studentId);
       if (!student || student.role !== 'STUDENT') throw new SE('FORBIDDEN', 'Only students can create bookings.');
       const fail = E.checkBookingRules({ bookings: state.bookings, bans: state.bans, blocks: state.blocks, studentId, date, hour, nowMs: now });
       if (fail) throw new SE(fail.code, fail.message);
+      const check = CUI.bookingForm.validate(form);
+      if (!check.ok) throw new SE('FORM_INVALID', check.errors.join(' '));
       const id = K.nextId(state, 'booking', 'b');
       const b = {
         id, ref: 'FC-' + state.counters.booking, studentId, departmentId: student.departmentId, date, hour,
-        status: 'PENDING_DEPARTMENT', createdAt: now, deptDecision: null, scDecision: null, rejectedAt: null
+        status: 'PENDING_DEPARTMENT', createdAt: now, deptDecision: null, scDecision: null, rejectedAt: null, form: check.form
       };
       state.bookings.push(b);
-      K.audit(state, studentId, 'BOOKING_CREATED', `${student.name} requested ${b.ref}: ${T.fmtDate(date)} ${T.fmtRange(hour)}`);
+      K.audit(state, studentId, 'BOOKING_CREATED', `${student.name} requested ${b.ref}: ${T.fmtDate(date)} ${T.fmtRange(hour)} (${CUI.bookingForm.purposeLabel(check.form.purpose)})`);
       K.write(state);
+      return K.enrich(state, b);
+    },
+
+    /** One booking incl. its form. Allowed for the owner, the department head of its department, and the Sports Centre head. */
+    async getBooking(actorId, bookingId) {
+      const { state } = K.read();
+      const actor = K.userOf(state, actorId), b = state.bookings.find(x => x.id === bookingId);
+      if (!actor || !b) throw new SE('NOT_FOUND', 'Booking not found.');
+      const ok = actor.role === 'SC_HEAD' || (actor.role === 'STUDENT' && b.studentId === actor.id) || (actor.role === 'DEPT_HEAD' && b.departmentId === actor.departmentId);
+      if (!ok) throw new SE('FORBIDDEN', 'You do not have permission to view this booking.');
       return K.enrich(state, b);
     },
 

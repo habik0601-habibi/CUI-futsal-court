@@ -86,3 +86,23 @@ textarea { min-height: 80px; resize: vertical; }
 /* Logo + cancelled badge */
 .brand-logo { width: 46px; height: 46px; border-radius: 50%; background: #fff; padding: 2px; flex-shrink: 0; object-fit: contain; }
 .badge-cancelled { background: #eceff4; color: #5d6b82; text-decoration: line-through; }
+
+/* Booking form */
+.modal.wide { max-width: 780px; }
+.fsec { margin-bottom: 22px; }
+.fsec h4 { font-family: var(--font-head); font-size: 1.25rem; color: var(--navy); border-bottom: 2px solid var(--line); padding-bottom: 4px; margin-bottom: 10px; }
+.fsec h5, .modal-body h5 { font-size: .95rem; margin: 12px 0 6px; color: var(--navy); }
+.fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+.radios { display: flex; flex-wrap: wrap; gap: 8px 22px; }
+label.radio, label.check { display: flex; align-items: center; gap: 8px; font-size: .95rem; color: var(--text); font-weight: 500; }
+label.radio input, label.check input { width: 20px; height: 20px; min-height: 0; margin: 0; flex-shrink: 0; }
+label.check { margin-top: 12px; align-items: flex-start; }
+.prow { display: grid; grid-template-columns: 24px 1fr 1fr; gap: 8px; align-items: center; margin-bottom: 6px; }
+.prow span { color: var(--muted); font-size: .85rem; text-align: right; }
+.prow input { margin: 0; }
+.rules { margin: 10px 0 0 20px; line-height: 1.6; font-size: .92rem; }
+.rules li { margin-bottom: 6px; }
+details summary { cursor: pointer; font-weight: 600; color: var(--navy-2); min-height: 32px; }
+#formErrors ul { margin: 6px 0 0 18px; }
+ol.players { margin: 6px 0 12px 22px; line-height: 1.7; }
+@media (max-width: 600px) { .fgrid { grid-template-columns: 1fr; } .prow { grid-template-columns: 20px 1fr; } .prow .pr { grid-column: 2; } }

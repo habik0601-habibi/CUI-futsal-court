@@ -35,9 +35,19 @@
       ];
       const dep = id => users.find(u => u.id === id).departmentId;
       let n = 0;
+      const NAMES = ['Ahmed Raza', 'Ali Hassan', 'Bilal Khan', 'Usman Ghani', 'Hamza Tariq', 'Zain Abbas', 'Saad Malik', 'Fahad Iqbal', 'Asad Mehmood', 'Talha Siddiqui', 'Danish Ali', 'Hassan Raza', 'Umair Shah', 'Taimoor Khan'];
+      const mkForm = (studentId, purpose) => {
+        const u = users.find(x => x.id === studentId), d = DEPARTMENTS.find(x => x.id === u.departmentId), pre = u.rollNo.split('-').slice(0, 2).join('-');
+        const pl = off => Array.from({ length: 7 }, (_, i) => ({ name: NAMES[(off + i) % NAMES.length], reg: pre + '-' + String(100 + ((off + i) * 7) % 90) }));
+        return {
+          purpose, undertaking: true,
+          teamA: { department: d.name, semester: '6', captainName: u.name, captainReg: u.rollNo, mobile: '0300-1234567', email: u.email, players: [{ name: u.name, reg: u.rollNo }, ...pl(0).slice(1)] },
+          teamB: purpose === 'FRIENDLY' ? { department: 'Management Sciences', semester: '4', captainName: 'Hassan Ali', captainReg: 'SP24-BBA-016', mobile: '0311-7654321', email: 'sp24-bba-016@student.example', players: pl(5) } : null
+        };
+      };
       const mk = (studentId, date, hour, status, extra) => ({
         id: 'b' + (++n), ref: 'FC-' + (1000 + n), studentId, departmentId: dep(studentId), date, hour, status,
-        createdAt: now - 3 * 3600000, deptDecision: null, scDecision: null, rejectedAt: null, ...extra
+        createdAt: now - 3 * 3600000, form: mkForm(studentId, n % 3 === 0 ? 'FRIENDLY' : n % 3 === 1 ? 'PRACTICE' : 'TOURNAMENT'), deptDecision: null, scDecision: null, rejectedAt: null, ...extra
       });
       const dd = (by, at, reason) => ({ by, at, reason: reason || null });
       const f1 = nextWeekday(today, 1), f2 = nextWeekday(today, 2), f3 = nextWeekday(today, 3);

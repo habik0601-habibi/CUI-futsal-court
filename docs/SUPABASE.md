@@ -5,7 +5,7 @@ Replace the implementations in `src/services/` (keep the method names and return
 ## Suggested tables
 - `departments(id, name, code)`
 - `profiles(id → auth.users, role STUDENT|DEPT_HEAD|SC_HEAD, name, email, department_id, roll_no)`; unique partial index: one `DEPT_HEAD` per `department_id`
-- `bookings(id, ref, student_id, department_id, date, hour, status, created_at, dept_decision_by/at/reason, sc_decision_by/at/reason, rejected_at, no_show_marked_at)`
+- `bookings(id, ref, student_id, department_id, date, hour, status, created_at, dept_decision_by/at/reason, sc_decision_by/at/reason, rejected_at, no_show_marked_at, form jsonb)` — `form` holds the student booking form (purpose, team A/B details, players, undertaking); validate it server-side too (`src/lib/bookingForm.js`)
 - `bans(id, student_id, booking_id, starts_at, ends_at)`
 
 ## Double-booking guard (only confirmed bookings lock a slot; several students may have pending requests for it)
